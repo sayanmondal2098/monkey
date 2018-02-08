@@ -116,6 +116,7 @@ class NetworkScanner(object):
         :param scanner: HostScanner instance
         :return: Victim or None if victim isn't alive
         """
+        LOG.debug("Scanning potential victim: %r", victim)
         if scanner.is_host_alive(victim):
             LOG.debug("Found potential victim: %r", victim)
             return victim
