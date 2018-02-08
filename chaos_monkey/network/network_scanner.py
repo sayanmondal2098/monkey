@@ -73,7 +73,7 @@ class NetworkScanner(object):
 
         scanner = scan_type()
         victims_count = 0
-        pool = ThreadPool(ITERATION_BLOCK_SIZE)
+        pool = ThreadPool()
 
         for net_range in self._ranges:
             LOG.debug("Scanning for potential victims in the network %r", net_range)
