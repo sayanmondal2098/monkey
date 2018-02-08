@@ -9,12 +9,14 @@ __author__ = 'itamar'
 
 
 class NetworkRange(object):
+    """
+    Abstract class for generating network addresses for scanning
+    """
     __metaclass__ = ABCMeta
 
     def __init__(self, base_address, shuffle=True):
         self._base_address = base_address
         self._shuffle = shuffle
-        self._config = __import__('config').WormConfiguration
 
     @abstractmethod
     def _get_range(self):
@@ -30,6 +32,9 @@ class NetworkRange(object):
 
 
 class ClassCRange(NetworkRange):
+    """
+        Takes a class C range (IP address and masking bottom 8 bits) and provides it on the fly
+    """
     def __init__(self, base_address, shuffle=True):
         base_address = struct.unpack(">L", socket.inet_aton(base_address))[0] & 0xFFFFFF00
         super(ClassCRange, self).__init__(base_address, shuffle=shuffle)
@@ -59,16 +64,17 @@ class RelativeRange(NetworkRange):
 
 
 class FixedRange(NetworkRange):
-    def __init__(self, fixed_addresses=None, shuffle=True):
+    """
+        Takes a static list IPs and provides them on the fly
+    """
+
+    def __init__(self, fixed_addresses, shuffle=True):
         base_address = 0
         super(FixedRange, self).__init__(base_address, shuffle=shuffle)
-        if not fixed_addresses:
-            self._fixed_addresses = self._config.range_fixed
-        else:
-            if type(fixed_addresses) is str:
-                self._fixed_addresses = [fixed_addresses]
-            else:
-                self._fixed_addresses = list(fixed_addresses)
+        if type(fixed_addresses) is str:
+            self._fixed_addresses = [fixed_addresses]
+        else:  # it's an iterable
+            self._fixed_addresses = list(fixed_addresses)
 
     def __repr__(self):
         return "<FixedRange %s>" % (",".join(self._fixed_addresses))
