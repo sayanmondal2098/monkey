@@ -8,6 +8,7 @@ DEFAULT_TIMEOUT = 10
 BANNER_READ = 1024
 
 LOG = logging.getLogger(__name__)
+SLEEP_BETWEEN_POLL = 0.5
 
 
 def struct_unpack_tracker(data, index, fmt):
@@ -123,12 +124,20 @@ def check_tcp_ports(ip, ports, timeout=DEFAULT_TIMEOUT, get_banner=False):
             LOG.warning("Failed to connect to port %s, error code is %d", port, err)
 
         if len(good_ports) != 0:
-            time.sleep(timeout)
-            # this is possibly connected. meaning after timeout wait, we expect to see a connection up
-            # Possible valid errors codes if we chose to check for actually closed are
-            # ECONNREFUSED (111) or WSAECONNREFUSED (10061) or WSAETIMEDOUT(10060)
-            connected_ports_sockets = [s for s in good_ports if
-                                       s[1].getsockopt(socket.SOL_SOCKET, socket.SO_ERROR) == 0]
+            timeout = int(round(timeout))  # clamp to integer, to avoid checking input
+            time_left = timeout
+            sockets_to_try = good_ports[:]
+            connected_ports_sockets = []
+            while (time_left >= 0) and len(sockets_to_try):
+                error_codes = [s[1].getsockopt(socket.SOL_SOCKET, socket.SO_ERROR) for s in good_ports]
+                connected_ports_sockets = [s for s, e in zip(sockets_to_try, error_codes)]
+                # Possible valid errors codes if we chose to check for actually closed are
+                # ECONNREFUSED (111) or WSAECONNREFUSED (10061) or WSAETIMEDOUT(10060)
+                sockets_to_try = [s for s, e in zip(sockets_to_try, error_codes) if e not in [111, 10061, 10060]]
+                if sockets_to_try:
+                    time.sleep(SLEEP_BETWEEN_POLL)
+                    timeout -= SLEEP_BETWEEN_POLL
+
             LOG.debug(
                 "On host %s discovered the following ports %s" %
                 (str(ip), ",".join([str(x[0]) for x in connected_ports_sockets])))
