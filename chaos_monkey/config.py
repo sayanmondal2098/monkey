@@ -6,7 +6,7 @@ from abc import ABCMeta
 from itertools import product
 
 from exploit import WmiExploiter, SmbExploiter, SSHExploiter, ShellShockExploiter, \
-    SambaCryExploiter, ElasticGroovyExploiter
+    SambaCryExploiter, ElasticGroovyExploiter, Ms08_067_Exploiter, RdpExploiter
 from network import TcpScanner, PingScanner, SMBFinger, SSHFinger, HTTPFinger, MySQLFinger, ElasticFinger
 from network.range import FixedRange
 
